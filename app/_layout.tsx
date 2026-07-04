@@ -1,24 +1,24 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClient } from '@tanstack/react-query';
+import { Slot } from 'expo-router';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      networkMode: 'offlineFirst', // tenta cache antes da rede
+      staleTime: 1000 * 60 * 5,
+    },
+  },
+});
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+const persister = createAsyncStoragePersister({ storage: AsyncStorage });
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+      <Slot />
+    </PersistQueryClientProvider>
   );
 }
